@@ -1,2 +1,2 @@
-# DS-Activites
-Repository for storing software development course activities 
+# DS-Activities
+Repository for storing software development course activities 📖
