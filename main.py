@@ -1,2 +1,2 @@
 def greet():
-	print("Cherry pick this!")
+	print("This change is stashed")
