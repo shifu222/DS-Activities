@@ -1,2 +1,3 @@
 # Mi proyecto
 Este proyecto es un ejemplo de cómo usar GIt.
+Implementando una nueva característica...
