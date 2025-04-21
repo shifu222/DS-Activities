@@ -23,11 +23,32 @@ Gráfico de ramas después de un cherry-pick
 #### Ejercicios Teóricos
 
 1.Explica la diferencia entre git merge y git rebase, describe en qué escenarios sería más adecuado utializar cada uno en un equipo de desarrollo ágil que sigue las practicas Scrum.
+> git merge combina dos ramas creando un nuevo commit de merge. No modifica el historial de los commits anteriores, sino que añade uno que une los cambios.
+> git rebase mueve los commits de una rama sobre otra, reescribiendo el historial como si los cambios se hubieran desarrollado de forma lineal .
+>En un Scrum el merge es más adecuado para integrar el trabajo finalizado al final de un sprint. Usar merge permite mantener visible el historial completo del trabajo en equipo, incluyendo ramas de funcionalidades, bugs, etc.
+>Rebase es más adecuado para actualizar ramas antes de integrarlas, ayuda a resolver conlflictos y mantener un historial limpio y facil de leer.
 
 2.¿Cómo crees que el uso de git rebase ayuda a mejorar las prácticas de DevOps, especialmente en la implementación continua (CI/CD)? Discute los beneficios de mantener un historial lineal en el contexto de una entrega continua de código y la automatización de pipelines
 
-3.Un equipo Scrum ha finalizado un sprint, pero durante la integración final a la rama principal (main) descubren que solo algunos commits específicos de la rama de una funcionalidad deben aplicarse a producción. ¿Cómo podría ayudar git cherry-pick en este caso? Explica los beneficios y posibles complicaciones.
+> Git rebase ayuda a mantener un historial lineal y ordenado, lo que facilita a las herramientas de CI/CD a que detecten cambios más facil, alpica build y pruebas automáticas de manera eficiente, minimiza errores de despliegue
+> Beneficios
+>
+> - Debuggin más rápido : Si un pipeline falla, es más facil identificar cual commit causó el problema(menos ruido de merges)
+> - Reverst controlados: Como tiene un sentido lineal entonces se puede revertir cada commit
 
+3.Un equipo Scrum ha finalizado un sprint, pero durante la integración final a la rama principal (main) descubren que solo algunos commits específicos de la rama de una funcionalidad deben aplicarse a producción. ¿Cómo podría ayudar git cherry-pick en este caso? Explica los beneficios y posibles complicaciones.
+> Esto se soluciona seleccionado cada commit usando cherry-pick, así se toma solo commits que están listos para producción sin necesidad de integrar toda la rama que es más complicado de verificar
+
+>Beneficios:
+>
+> - Permite hacer entregas parciales de funcionalidades
+> - Evita el riesgo de subir cambios no terminados o probados.
+
+>Posibles complicaciones:
+>
+> - Conflictos: Si los commits seleccionados dependen de otros commits que no fueron subidos a la rama de destino
+> - Duplicación: Si luego se mergea toda la rama, podrían duplicarse commits  
+>
 #### Ejercicios Prácticos
 
 1.Simulacion de un flujo de trabajo Scrum con git rebase git rebase y git merge
@@ -131,12 +152,94 @@ Con git diff, puedo filtrar las diferencias por archivos y lineas (git diff feat
 
 **3. Describe cómo usarías el comando git merge --no-commit --no-ff para simular una fusión en tu rama local. ¿Qué ventajas tiene esta práctica en un flujo de trabajo ágil con CI/CD, y cómo ayuda a minimizar errores antes de hacer commits definitivos? ¿Cómo automatizarías este paso dentro de una pipeline CI/CD?**
 
+> Usaría git merge --no-commit --no-ff para traer los cambios, intentar combinar, pero no hacer un commit automáticamente, de esta forma puedo ver si hay conflictos, ejecutar pruebas locales
+> Ventajas: Podemos detectar problemas temprano antes de afectar al historial, solo cambios probados y que no rompen nada se fusionan
+> Si hay conflictos, los resuelve sin hacer un commit, si despues de fusionar algo sale mal(test fallan, build rota) simplemente puedo abortar la operación
+>Podría automatizarlo clonando el repo,hacer un merge,build y un test,si todo pasa entonces que permita la fusión
+
+```yaml
+steps:
+    -run: git fetch origin feature-branch
+    -run: git merge --no-commit --no-ff origin/feature-branch
+    -run: npm install && npm run build && npm run test
+    -run: git merge --abort
+
+```
+
 **4.Explica cómo configurarías y utilizarías git mergetool en tu equipo para integrar herramientas gráficas que faciliten la resolución de conflictos. ¿Qué impacto tiene el uso de git mergetool en un entorno de trabajo ágil con CI/CD, y cómo aseguras que todos los miembros del equipo mantengan consistencia en las resoluciones?**
 
+> Cuando los conflictos de merge son complicados o son demasiados, es mejor resolverlos visualmente, es ahí donde entra git mergetool que abre un editor gráfico para resolver esos conflictos.
+> En entornos ágiles resuelve conflictos más rápido y más claro, reduce el riesgo de errores por fusiones manuales y esto desencadena evitar bloqueos largos en los pipelines por conflictos no resueltos.
+> Para asegurar la consitencia se puede hacer que se defina una herramienta oficial como vscode y documentarlo, definir gitconfigs compartidos, enseñar el correcto uso de git mergetoo y por último establecer políticas de fusión claras.
+
 **5. Explica las diferencias entre git reset --soft, git reset --mixed y git reset --hard. ¿En qué escenarios dentro de un flujo de trabajo ágil con CI/CD utilizarías cada uno? Describe un caso en el que usarías git reset --mixed para corregir un commit sin perder los cambios no commiteados y cómo afecta esto a la pipeline.**
+> Las diferencias
+>
+>- soft: Solo mueve el puntero HEAD.Los cambios se mantienen en el staging. Lo usaría cuando quiero deshacer el último commit pero mantener todo listo para un nuevo commit.
+>- mixed: Mueve HEAD y saca los cambios del staging, pero los deja en el directorio de trabajo. Lo usaría cuando quiero deshacer un commit y revisar los cambios antes de volverlos a comitear
+>- hard: Mueve HEAD y borra los cambios del staging y del directorio de trabajo.Lo usaría cuando quiero limpiar todo, incluso los cambios locales.
+> Un caso donde usaria el git mixed sería por ejemplo cuando un commit rompió la pipline porque olvidé correr npm test , entonces haría
+>
+```bash
+git reset --mixed HEAD~1
+ ```
+
+ > esto revertiría el commit , deja los cambios en mi directorio de trabajo, permite correjir errores y hacer un nuevo commit correjido.
 
 **6. Explica cómo utilizarías git revert para deshacer los cambios sin modificar el historial de commits. ¿Cómo te aseguras de que esta acción no afecte la pipeline de CI/CD y permita una rápida recuperación del sistema? Proporciona un ejemplo detallado de cómo revertirías varios commits consecutivos.**
 
+> Usaría git revert para que deshaga los cambios de un commit anterior y como no modifica el historial entonces no rompería la politica de la organización
+> Si quiero revertir varios commits consecutivos podría hacer lo siguiente supongamos que quiero revertir los 3 últimos commits entonces
+
+```bash
+git revert HEAD~3.. 
+```
+
 **7. Explica cómo utilizarías git stash para guardar temporalmente tus cambios y volver a ellos después de haber terminado el hotfix. ¿Qué impacto tiene el uso de git stash en un flujo de trabajo ágil con CI/CD cuando trabajas en múltiples tareas? ¿Cómo podrías automatizar el proceso de stashing dentro de una pipeline CI/CD?**
+> Cuando tengo cambios locales sin commitear y necesito cambiar de rama para un hotfix entonces uso git stash para guardar esos cambios. Después de terminar el hotfix, recupero la informacion usando git stash pop
+> El impacto que tiene en entornos ágiles son que
+>
+> - permite cambiar de contexto rapidamente sin perder avances
+> - Mantiene el enfoque en resolver las prioridades sin bloquear pipelines
+> - Permite realizar más de una tarea sin cometer cambios incompletos
+Para automatizar podría usar esto
+
+```bash
+git stash
+# corro hotfix tests
+git stash pop
+# sigue desarrollando mi tarea
+```
 
 **8.Diseña un archivo .gitignore que excluya archivos innecesarios en un entorno ágil de desarrollo. Explica por qué es importante mantener este archivo actualizado en un equipo colaborativo que utiliza CI/CD y cómo afecta la calidad y limpieza del código compartido en el repositorio.**
+
+> Por ejemplo para un proyecto que usa node
+
+```gitignore
+#Node
+node_modules/
+.env
+dist/
+coverage/
+
+#Logs
+*.log
+
+#IDEs
+.vscode/
+.idea/
+
+# SO
+.DS_Store
+.Thumbs.db
+
+# Docker
+*.pid
+
+```
+
+> Es importante mantener el gitingore actualizado porque
+>
+> - Evitar subir archivos no deseados(logs,temporales,credenciales)
+> - previene fallos de builds en CI/CD por diferencias locales
+> - Evita cargar el repo con paquetes o módulos que pueden ser instalados después de manera autómatica
