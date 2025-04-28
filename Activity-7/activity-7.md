@@ -255,3 +255,248 @@ def test_verifiy_limit_quatity_error():
 
     assert str(error.value) == "No puede comer más de 100 pepinos"
 ```
+
+**Ejercicio 6:  Escalabilidad con grandes cantidades de pepinos**
+
+Modifiqué el método comer de la clase belly, para que acepte un argumento más que permitirá realizar pruebas de rendimiento para cantidades mayores que 100 pepinos
+
+```python
+ def comer(self, pepinos, is_test=False):
+        if (pepinos < 0):
+            raise ValueError("La cantidad de pepinos no puede ser negativa")
+        limite = 10000 if is_test else 100
+        if (pepinos > limite):
+            raise ValueError("No puede comer más de 100 pepinos")
+        self.pepinos_comidos += pepinos
+
+```
+
+Test Unitario:
+Creando un nuevo test unitario para evaluar el rendimiento de comer 1000 pepinos.
+Como la cantidad de pepinos no afecta el rendimiento del programa, es lo mismo que una persona coma 100 como 20 (por la estructura del programa), entonces para cumplir con esta parte vamos a suponer que 10000 personas estan comiendo 1000 pepinos y vamos a evaluar su rendimiento, para eso se creó el siguiente test.
+
+```python
+def test_performance_performance_for_1000_cukes():
+    inicio = time.time()
+    for i in range(10000):
+        belly = Belly()
+        belly.comer(1200, is_test=True)
+        belly.esperar(tiempo_en_horas=10)
+        assert belly.esta_gruñendo()
+    fin = time.time()
+    print(f"Tiempo de la prueba de rendimiento {fin-inicio:.6f}")
+```
+
+Resultados del test unitario
+Se confirma de que como las operaciones tienen complejidad lineal, el programa realmente no se verá afectado por la variación de pepinos o personas.
+
+![imagen1](imagen1.png)
+
+**Ejercicio 7: Descripciones de tiempo complejas**
+
+Como antes ya tenía en cuenta las "y" o "and" en el string del tiempo, entonces solo se agrega que si detecta alguna coma la cambie por espacios en blanco y con eso puede seguir con el funcionamiento normal sin problemas.
+
+```python
+
+# añadi esta linea 
+# time_description = time_description.replace(',', ' ') 
+
+def parsing(time_description):
+    time_description = time_description.strip('"')
+    time_description = time_description.replace('and', ' ')
+    time_description = time_description.replace(
+        ',', ' ')  # lo último que añadi
+    time_description = time_description.replace('y', ' ')
+    time_description = time_description.strip()
+    if time_description == 'media hora' or time_description == 'half an hour':
+        return 0.5
+    else:
+        pattern = re.compile(
+            r'(?:(\w+)\s*(?:horas?|hours?))?\s*(?:(\w+)\s*(?:minutos?|minutes?))?\s*(?:(\w+)\s*(?:segundos?|seconds?))?')
+        match = pattern.match(time_description)
+
+        if match:
+            hours_word = match.group(1) or "0"
+            minutes_word = match.group(2) or "0"
+            seconds_word = match.group(3) or "0"
+
+            hours = convertir_palabra_a_numero(hours_word)
+            minutes = convertir_palabra_a_numero(minutes_word)
+            seconds = convertir_palabra_a_numero(seconds_word)
+
+            total_time_in_hours = hours + (minutes / 60) + (seconds/3600)
+            return total_time_in_hours
+        else:
+            raise ValueError(
+                f"No se pudo interpretar la descripción del tiempo: {time_description}")
+
+```
+
+**Test Unitario**
+Verifico que la función parsing(anteriormente modificada) convierta correctamente a horas el nuevo tiempo.
+
+```python
+def test_parsing_full_time():
+    time = "1hora, 30 minutos y 45 segundos"
+    time_english = "1 hour, 30 minutes and 45 seconds"
+    assert parsing(time) == 1.5125
+    assert parsing(time_english) == 1.5125
+```
+
+**Resultados**
+Test:
+
+![imagen2](imagen2.png)
+
+Gherkin:
+
+```
+  Escenario: Manejar Tiempos Complejos
+    Dado que he comido 110 pepinos
+    Cuando espero 3horas, 20 minutos y 40 segundos
+    Entonces mi estómago no debería gruñir
+
+  Escenario: Manejar Tiempos Complejos para gruñir
+    Dado que he comido 20 pepinos
+    Cuando espero 2 horas, 20 minutos y 10 segundos
+    Entonces mi estómago debería gruñir
+
+  Escenario: Manejar Tiempos Complejos para no gruñir
+    Dado que he comido 30 pepinos
+    Cuando espero 4 horas, 20 minutos y 10 segundos
+    Entonces mi estómago debería gruñir
+```
+
+Pasaron las pruebas
+
+![imagen](imagen3.png)
+
+**Ejercicio 8: De TDD a BDD – Convertir requisitos técnicos a pruebas en Gherkin**
+
+Agregué la prueba unitaria para validar si comio más de 10 pepinos y esperó 2 horas, el estómago gruñe.
+
+```python
+def test_gruñir_si_comido_muchos_pepinos():
+    belly = Belly()
+    belly.comer(15)
+    belly.esperar(2)
+    assert belly.esta_gruñendo() == True
+```
+
+**Ejecutando las pruebas**
+Resultados del test unitario
+![imagen4](imagen4.png)
+Resultados de la ejecución de gherkin
+![imagen5](imagen5.png)
+
+**Ejercicio 9: Identificación de criterios de aceptación para historias de usuario**
+
+Bueno esto ya se realizó a lo largo de los anteriores ejercicios, cuando se definian los escenarios guerkin para cada uno de ellos .
+
+**Ejercicio 10: Escribir pruebas unitarias antes de escenarios BDD**
+
+Igual que en el anterior ya definieron pruebas unitarias y también se crearon escenarios de guerkin por último también se agregó la ejecución del pytest y el behave en el pipeline
+
+```yml
+    - name: Run pytest
+      run: |
+          pytest
+
+    - name: Run behave
+      run: |
+          behave
+
+```
+
+**Ejercicio 11: Refactorización guiada por TDD y BDD**
+
+Se refactorizó la línea que eliminaba los espacios y caracteres como ("and",",","y")
+
+```python
+time_description = time_description.strip('"').replace(
+        "y", " ").replace("and", " ").replace(",", " ").strip()
+```
+
+y también
+
+```python
+if time_description in ['media hora', 'half an hour']:
+```
+
+agregué un test para verificar el funcionamiento de la función palabra a npumero
+
+```python
+def test_word_to_number():
+    assert convertir_palabra_a_numero("treinta") == 30
+    assert convertir_palabra_a_numero("half") == 0.5
+    assert convertir_palabra_a_numero("media") == 0.5
+    assert convertir_palabra_a_numero("forty") == 40
+
+```
+
+agregué nuevos escenarios para capturar errores de formateo e entradas invalidas
+
+```
+
+  Escenario: Error por rango inválido en tiempo aleatorio
+    Dado que he comido 20 pepinos
+    Cuando espero un tiempo aleatorio "entre 5 y 2 horas"
+    Entonces debería ocurrir un error de rango inválido
+
+
+  @english
+  Escenario: Error por formato de tiempo aleatorio incorrecto en inglés
+    Dado que he comido 20 pepinos
+    Cuando espero un tiempo aleatorio "between 5 and 2 hours"
+    Entonces debería ocurrir un error de rango inválido
+```
+
+**Resultados**
+pytest:
+![imagen6](imagen6.png)
+behave:
+![imagen7](imagen7.png)
+coverage:
+Tiene una convertura del 84%
+![imagen8](imagen8.png)
+
+**Ejercicio 12: Ciclo completo de TDD a BDD – Añadir nueva funcionalidad**
+
+Esta parte ya desarrolló a lo largo de los ejercicios anteriores
+
+**Ejercicio 13: Añadir criterios de aceptación claros**
+Añadi nuevos criterios
+
+```
+
+  @criterio_nuevo
+  Escenario: Ver cuántos pepinos faltan si no he comido nada
+    Dado que no he comido pepinos
+    Cuando pregunto cuántos pepinos me faltan para gruñir
+    Entonces debería decirme que me faltan 10 pepinos
+
+  @criterio_nuevo
+  Escenario: Ver cuántos pepinos faltan después de comer algunos
+    Dado que he comido 6 pepinos
+    Cuando pregunto cuántos pepinos me faltan para gruñir
+    Entonces debería decirme que me faltan 4 pepinos
+
+  @criterio_nuevo
+  Escenario: Ver que ya no faltan pepinos porque ya gruño
+    Dado que he comido 12 pepinos
+    Cuando pregunto cuántos pepinos me faltan para gruñir
+    Entonces debería decirme que ya estoy gruñendo
+```
+
+Agregué la función para saber cuantos pepinos le faltan y tenga que gruñir
+
+```python
+
+    def pepinos_para_grunir(self):
+        pepinos_necesarios = 10
+        if self.pepinos_comidos >= pepinos_necesarios:
+            return 0
+        else:
+            return pepinos_necesarios - self.pepinos_comidos
+
+```
