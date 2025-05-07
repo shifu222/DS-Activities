@@ -39,4 +39,5 @@ show_missing = True
 ```
 
 Depués de ejecutar `pytest` tenemos la salida
+
 ![imagen1](imagen1.png)
