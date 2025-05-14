@@ -7,27 +7,24 @@ assignees: ''
 
 ---
 
-## Descripción
+## User story  
 
-Explica brevemente qué se necesita hacer en esta tarea. Si forma parte de una épica mencionalo.
+*As a* (specific role - e.g., "developer," "admin," "customer")  
+*I need* (clear functionality or feature needed)  
+*So that* (explain the value or business reason for this feature)
 
-## Objetivo
+---
 
-¿Qué se busca lograr con esta tarea?
+##  *Context & Assumptions*  
+- List any known constraints, assumptions, or dependencies.
+- Mention related user stories or issues (if applicable).
 
-## Pasos para completarla
+---
 
-- [ ] Paso 1: Descripción del primer paso
-- [ ] Paso 2: Descripción del segundo paso
-- [ ] Paso 3: Descripción del tercer paso
-
-## Cómo probar que funciona
-
-Instrucciones claras y detalladas para verificar que la tarea está completa y funciona correctamente.
-
-- Ejecutar comando
-- Verificar la salida del comando
-
-## Notas
-
-Detalles extras que ayudan a comprender mejor la tarea.
+##  *Acceptance criteria*  
+```gherkin
+Scenario: <Short Description>
+Given <initial context or system state>
+When <user performs an action>
+Then <expected outcome or behavior>
+And <optional additional conditions>
